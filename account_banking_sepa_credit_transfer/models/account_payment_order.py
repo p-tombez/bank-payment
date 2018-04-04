@@ -84,29 +84,35 @@ class AccountPaymentOrder(models.Model):
             priority = line.priority
             local_instrument = line.local_instrument
             categ_purpose = line.category_purpose
+            currency_name = line.currency_id.name
             # The field line.date is the requested payment date
             # taking into account the 'date_prefered' setting
             # cf account_banking_payment_export/models/account_payment.py
             # in the inherit of action_open()
-            key = (line.date, priority, local_instrument, categ_purpose)
+            key = (line.date, priority, local_instrument,
+                   categ_purpose, currency_name)
             if key in lines_per_group:
                 lines_per_group[key].append(line)
             else:
                 lines_per_group[key] = [line]
-        for (requested_date, priority, local_instrument, categ_purpose),\
-                lines in lines_per_group.items():
+        for (requested_date, priority, local_instrument,
+             categ_purpose, currency_name), lines in lines_per_group.items():
             # B. Payment info
             payment_info, nb_of_transactions_b, control_sum_b = \
                 self.generate_start_payment_info_block(
                     pain_root,
                     "self.name + '-' "
-                    "+ requested_date.replace('-', '')  + '-' + priority + "
-                    "'-' + local_instrument + '-' + category_purpose",
+                    "+ requested_date.replace('-', '') + '-' "
+                    "+ priority + '-' "
+                    "+ currency_name + '-' "
+                    "+ local_instrument + '-' "
+                    "+ category_purpose",
                     priority, local_instrument, categ_purpose,
                     False, requested_date, {
                         'self': self,
                         'priority': priority,
                         'requested_date': requested_date,
+                        'currency_name': currency_name,
                         'local_instrument': local_instrument or 'NOinstr',
                         'category_purpose': categ_purpose or 'NOcateg',
                     }, gen_args)
